@@ -6,7 +6,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -189,7 +188,6 @@ func (s *Handler) putObject(w http.ResponseWriter, r *http.Request, key string) 
 	w.Header().Set("ETag", etag)
 	w.WriteHeader(http.StatusOK)
 
-	log.Printf("[s3] PUT %s", key)
 	s.syncer.Trigger()
 }
 
@@ -213,8 +211,6 @@ func (s *Handler) getObject(w http.ResponseWriter, r *http.Request, key string) 
 	w.Header().Set("Last-Modified", info.ModTime().UTC().Format(http.TimeFormat))
 	w.WriteHeader(http.StatusOK)
 	io.Copy(w, f)
-
-	log.Printf("[s3] GET %s", key)
 }
 
 func (s *Handler) headObject(w http.ResponseWriter, r *http.Request, key string) {
@@ -253,7 +249,6 @@ func (s *Handler) deleteObject(w http.ResponseWriter, r *http.Request, key strin
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	log.Printf("[s3] DELETE %s", key)
 	s.syncer.Trigger()
 }
 

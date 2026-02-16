@@ -70,7 +70,7 @@ func sigV4Verify(r *http.Request, accessKey, secretKey, region string) bool {
 		payloadHash = "UNSIGNED-PAYLOAD"
 	}
 
-	canonicalURI := r.URL.Path
+	canonicalURI := r.URL.EscapedPath()
 	if canonicalURI == "" {
 		canonicalURI = "/"
 	}

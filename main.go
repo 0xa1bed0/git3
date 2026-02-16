@@ -70,7 +70,7 @@ func main() {
 		log.Printf("[obsidian-sync] git=%s branch=%s debounce=%s pull=%s", cfg.GitRepo, cfg.GitBranch, cfg.Debounce, pullDuration)
 	}
 
-	if err := http.ListenAndServe(cfg.Addr, handler); err != nil {
+	if err := http.ListenAndServe(cfg.Addr, s3.LoggingMiddleware(handler)); err != nil {
 		log.Fatal(err)
 	}
 }

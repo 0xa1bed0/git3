@@ -123,6 +123,41 @@ func TestSigV4VerifyValidSignature(t *testing.T) {
 	}
 }
 
+func TestSigV4VerifyURLEncodedPath(t *testing.T) {
+	// Verify that paths with %20 (spaces) produce correct signatures.
+	// The canonical URI must use the raw (percent-encoded) path, not the decoded path.
+	accessKey := "AKIAIOSFODNN7EXAMPLE"
+	secretKey := "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
+	region := "us-east-1"
+	dateStamp := "20230101"
+	amzDate := "20230101T000000Z"
+
+	rawPath := "/vault/folder/How%20LLMs%20work.md"
+	req := httptest.NewRequest("PUT", "http://example.com"+rawPath+"?x-id=PutObject", nil)
+	req.Host = "example.com"
+	req.Header.Set("X-Amz-Date", amzDate)
+	req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+
+	signedHeaders := "host;x-amz-content-sha256;x-amz-date"
+	canonicalHeaders := "host:example.com\nx-amz-content-sha256:UNSIGNED-PAYLOAD\nx-amz-date:" + amzDate + "\n"
+	canonicalQueryString := sortQueryString(req.URL.Query().Encode())
+
+	// Client SDK uses the raw (encoded) path for the canonical URI
+	canonicalRequest := "PUT\n" + rawPath + "\n" + canonicalQueryString + "\n" + canonicalHeaders + "\n" + signedHeaders + "\nUNSIGNED-PAYLOAD"
+
+	stringToSign := "AWS4-HMAC-SHA256\n" + amzDate + "\n" + dateStamp + "/" + region + "/s3/aws4_request\n" + hashSHA256([]byte(canonicalRequest))
+
+	signingKey := deriveSigningKey(secretKey, dateStamp, region, "s3")
+	signature := hex.EncodeToString(hmacSHA256(signingKey, []byte(stringToSign)))
+
+	authHeader := "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + dateStamp + "/" + region + "/s3/aws4_request, SignedHeaders=" + signedHeaders + ", Signature=" + signature
+	req.Header.Set("Authorization", authHeader)
+
+	if !sigV4Verify(req, accessKey, secretKey, region) {
+		t.Fatal("expected valid signature for URL-encoded path")
+	}
+}
+
 func TestSigV4VerifyTamperedSignature(t *testing.T) {
 	accessKey := "AKIAIOSFODNN7EXAMPLE"
 	secretKey := "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
