@@ -1,0 +1,18 @@
+services:
+  obsidian-sync:
+    image: ghcr.io/0xa1bed0/obsidian-sync:latest
+    container_name: obsidian-sync
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./vault:/vault
+    environment:
+      - ACCESS_KEY=anatolii
+      - SECRET_KEY=your-secret-key-here
+      - BUCKET=vault
+      - REGION=us-east-1
+      - GIT_REPO=https://github.com/you/obsidian-vault.git
+      - GIT_TOKEN=ghp_your-personal-access-token
+      - GIT_BRANCH=main
+      - DEBOUNCE=10
