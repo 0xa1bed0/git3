@@ -88,6 +88,13 @@ func initRepo(cfg Config) (*gogit.Repository, error) {
 		return nil, fmt.Errorf("git init: %w", err)
 	}
 
+	// Set HEAD to the configured branch so the first commit lands there
+	// (PlainInit defaults to "master", which may differ from cfg.Branch)
+	ref := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.NewBranchReferenceName(cfg.Branch))
+	if err := repo.Storer.SetReference(ref); err != nil {
+		log.Printf("[git] set HEAD to %s failed: %v", cfg.Branch, err)
+	}
+
 	// Add remote if configured
 	if cfg.Repo != "" {
 		_, err = repo.CreateRemote(&config.RemoteConfig{
